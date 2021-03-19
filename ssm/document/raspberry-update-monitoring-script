@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "2.2",
+  "description": "Replace the current monitoring script with the lates version at github",
+  "mainSteps": [
+    {
+      "action": "aws:runShellScript",
+      "name": "test",
+      "inputs": {
+        "runCommand": [
+          "systemctl stop aws-sitewise;",
+          "sleep 3",
+          "mv /usr/local/sitewise/stirlingdevice_performance.py /usr/local/sitewise/stirlingdevice_performance_last.py",
+          "wget https://raw.githubusercontent.com/scalingbits/engine-monitoring/main/python/stirlingdevice_performance.py --output-document=/usr/local/sitewise/stirlingdevice_performance.py",
+          "chmod ugo+x /usr/local/sitewise/stirlingdevice_performance.py",
+          "systemctl start aws-sitewise;"
+        ],
+        "workingDirectory": "/tmp",
+        "timeoutSeconds": "3600",
+        "executionTimeout": "3600"
+      }
+    }
+  ]
+}

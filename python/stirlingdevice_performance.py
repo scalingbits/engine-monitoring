@@ -1,3 +1,8 @@
+# Monitor the rpm through a light barrier
+# report the results back to AWS IOT core
+# Version 3.0
+# last update March 19, 2021
+
 from AWSIoTPythonSDK.MQTTLib import AWSIoTMQTTShadowClient
 
 import json
@@ -7,7 +12,7 @@ import logging
 import time
 
 #########
-# Imports for Raspberry sensors
+# Imports for StirlingDevice
 #########
 from gpiozero import CPUTemperature
 # rpm sensor related
@@ -16,7 +21,8 @@ GPIO.setmode(GPIO.BCM)
 ####################
 # Imports for temperature sensor
 ################################
-#import Adafruit_DHT
+#import os
+import Adafruit_DHT
 
 DHT_SENSOR = Adafruit_DHT.DHT22
 DHT_PIN = 4
@@ -27,6 +33,7 @@ DHT_PIN = 4
 old_time = 0.0
 timeouts = 0
 old_period = 0
+#running = 0
 trigger = 0
 # a list of periods sampled in a interval
 rpmlist = []
@@ -72,16 +79,22 @@ def my_callback(channel):
     new_time = time.time()
     period = new_time - old_time
     rpm = round(60/period)
-    accelerate =  round((old_period-period),6) 
+    accelerate = round((old_period-period),6)
     # Catching errors
     # rpm is to high...
     if rpm >= 250: 
        print("***** Error, rpm:{:10.2f}     ***********".format(rpm))
        rpm = 0
     addtolist(rpm,accelerate)
+    # Tracing
+    #print(" acc  {:10.6f}     ***********".format(accelerate))
+    #print(" per  {:10.6f}     ***********".format(period))
+    #print(" olp  {:10.6f}     ***********".format(old_period))
     old_time = new_time
     old_period = period
     trigger = 1
+
+    #print(" New  %    rpm ***********" % (rpm))
 
 # Configures the argument parser for this program.
 def configureParser():
@@ -134,6 +147,7 @@ class PerformanceShadowClient:
             print("rpm:           \t{}".format(performance["rpm"]))
             print("running:       \t{}".format(performance["running"]))
             print("accelerate:    \t{}".format(performance["accelerate"]))
+            print("stirlingtemp:  \t{}\n".format(performance["stirlingtemp"]))
             payload = { "state": { "reported": performance } }
             deviceShadowHandler.shadowUpdate(json.dumps(payload), self.shadowUpdateCallback, 5)
             time.sleep(args.requestDelay)
@@ -150,8 +164,9 @@ class PerformanceShadowClient:
 
     # Returns the local device's CPU usage, memory usage, and timestamp.
     def readPerformance(self):
-        # trigger = 0 --> there has not been an rpm interrupt in the last period
+        #global rpm
         global trigger
+        #global accelerate
         cpu = psutil.cpu_percent()
         memory = psutil.virtual_memory().percent
 
@@ -160,7 +175,7 @@ class PerformanceShadowClient:
         raspberrytemp = cputemp.temperature
 
         if trigger == 0:  
-           # first iteration or no reading in the last interval
+           # first iteration. We just started
            rpm = 0
            accelerate = 0
         else:
@@ -178,13 +193,12 @@ class PerformanceShadowClient:
            accelerate = 0
         else: running = 1
 
-        # reading of temperature sensor is diabled. It needs to much time.
         #humidity, stirlingtemp = Adafruit_DHT.read_retry(DHT_SENSOR, DHT_PIN)
         #stirlingtemp = round(stirlingtemp,1)
-        #stirlingtemp = 21
+        stirlingtemp = 21
         timestamp = time.time()
         
-        return { "cpu": cpu, "memory": memory, "timestamp": timestamp, "mqtt_time_outs": timeouts, "raspberrytemp": raspberrytemp, "rpm": rpm, "running": running, "accelerate": accelerate }
+        return { "cpu": cpu, "memory": memory, "timestamp": timestamp, "mqtt_time_outs": timeouts, "raspberrytemp": raspberrytemp, "rpm": rpm, "running": running, "accelerate": accelerate, "stirlingtemp": stirlingtemp }
     
     # Prints the result of a shadow update call.
     def shadowUpdateCallback(self, payload, responseStatus, token):
