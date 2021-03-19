@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "2.2",
+  "description": "Stop IOT data gathering on Raspberry",
+  "mainSteps": [
+    {
+      "action": "aws:runShellScript",
+      "name": "test",
+      "inputs": {
+        "runCommand": [
+          "systemctl stop aws-sitewise;"
+        ],
+        "workingDirectory": "/tmp",
+        "timeoutSeconds": "3600",
+        "executionTimeout": "3600"
+      }
+    }
+  ]
+}

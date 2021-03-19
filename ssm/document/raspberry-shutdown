@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "2.2",
+  "description": "Shutdown a Raspberry Pi",
+  "mainSteps": [
+    {
+      "action": "aws:runShellScript",
+      "name": "test",
+      "inputs": {
+        "runCommand": [
+          "shutdown -P;"
+        ],
+        "workingDirectory": "/tmp",
+        "timeoutSeconds": "3600",
+        "executionTimeout": "3600"
+      }
+    }
+  ]
+}

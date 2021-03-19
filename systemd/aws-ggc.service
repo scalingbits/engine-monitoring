@@ -1,0 +1,15 @@
+[Unit]
+Description=AWS Greengrass Service
+After=syslog.target network.target
+ 
+[Service]
+Type=forking
+User=root
+WorkingDirectory=/greengrass/ggc/core
+ExecStart=/greengrass/ggc/core/greengrassd start
+ExecStop=/greengrass/ggc/core/greengrassd stop
+Restart=always
+RestartSec=60
+ 
+[Install]
+WantedBy=multi-user.target

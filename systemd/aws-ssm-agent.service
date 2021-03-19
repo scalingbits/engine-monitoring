@@ -1,0 +1,15 @@
+[Unit]
+Description=AWS ssm agent
+After=syslog.target network.target
+ 
+[Service]
+Type=forking
+User=root
+WorkingDirectory=/usr/local/sitewise
+ExecStart=/bin/bash ssm-service-script.sh start
+ExecStop=/bin/bash ssm-service-script.sh stop
+Restart=always
+RestartSec=60
+ 
+[Install]
+WantedBy=multi-user.target
